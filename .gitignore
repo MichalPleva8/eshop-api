@@ -1,0 +1,5 @@
+
+# Default
+build
+node_modules
+.env
