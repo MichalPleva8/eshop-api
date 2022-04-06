@@ -8,12 +8,15 @@ import express, {
 } from 'express';
 import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
+import helmet from 'helmet';
 
 import { sequelize } from './db';
 import CategoryRouter from './routes/categories';
 import ProductRouter from './routes/products';
+import AuthRouter from './routes/auth';
 import handleError from './middleware/handleError';
 import localization from './middleware/localization';
+import authorization from './middleware/authorization';
 
 dotenv.config();
 const app = express();
@@ -21,9 +24,11 @@ const app = express();
 // Middleware 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(helmet());
 app.use(localization as RequestHandler);
-app.use('/api/categories', CategoryRouter());
-app.use('/api/products', ProductRouter());
+app.use('/api/categories', authorization, CategoryRouter());
+app.use('/api/products', authorization, ProductRouter());
+app.use('/api/auth', AuthRouter());
 
 // Handle 500 (Internal Error)
 app.use(handleError as ErrorRequestHandler);

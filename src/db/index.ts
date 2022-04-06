@@ -4,6 +4,7 @@ import { Sequelize } from 'sequelize';
 
 import defineProduct from './product';
 import defineCategory from './category';
+import defineUser from './user';
 
 const sequelize: Sequelize = new Sequelize('postgresql://postgres:root@localhost:5432/eshop', {
 	logging: false,
@@ -14,6 +15,7 @@ sequelize.authenticate().catch((e: any) => console.error(`Unable to connect to t
 const modelsBuilder = (instance: Sequelize) => ({
 	Product: instance.import(path.join(__dirname, 'product'), defineProduct),
 	Category: instance.import(path.join(__dirname, 'category'), defineCategory),
+	User: instance.import(path.join(__dirname, 'user'), defineUser),
 });
 
 const models = modelsBuilder(sequelize);

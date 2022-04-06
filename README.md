@@ -1,4 +1,4 @@
-# Eshop api system  
+# REST Api - Eshop  
 
 ### Requirements
 
@@ -13,5 +13,9 @@
 - install dependencies with `npm i`
 - create eshop database (application access `postgresql://localhost:5432/eshop`, make sure you use correct port and db name )
 - create db schema and populate db with `npm run seed`
-- create .env file and add ``` TOKEN_SECRET= ``` inorded to encrypt JWT token
+- create .env file and add ``` TOKEN_SECRET= ``` and ``` REFRESH_SECRET= ``` inorded to encrypt JWT token
 - run express server with `npm start`
+
+### My notes
+
+- Authorization system is based on JWT 
