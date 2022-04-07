@@ -1,15 +1,15 @@
 import {
 	models,
 	sequelize,
-} from './db/index'
+} from './db/index';
 
 const {
 	Product,
 	Category,
-} = models
+} = models;
 
 const seedDB = async () => {
-	await sequelize.sync({ force: true })
+	await sequelize.sync({ force: true });
 
 	await Category.bulkCreate([{
 		name: 'sport',
@@ -20,7 +20,7 @@ const seedDB = async () => {
 	}, {
 		name: 'furniture',
 	}, {
-		name: 'computer'
+		name: 'computer',
 	}, {
 		name: 'food',
 	}] as any[], { returning: true });
@@ -40,18 +40,18 @@ const seedDB = async () => {
 	}, {
 		name: 'Product 4',
 		price: 200.00,
-		categoryID: 5, 
+		categoryID: 5,
 	}, {
 		name: 'Product 5',
 		price: 5.20,
 		categoryID: 1,
 	}]);
-}
+};
 
 seedDB().then(() => {
-	console.log('DB seed done')
-	process.exit(0)
+	console.log('DB seed done');
+	process.exit(0);
 }).catch((err) => {
-	console.error('error in seed, check your data and model \n \n', err)
-	process.exit(1)
-})
+	console.error('error in seed, check your data and model \n \n', err);
+	process.exit(1);
+});

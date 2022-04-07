@@ -2,8 +2,10 @@ import {
 	Router,
 	Request,
 	Response,
-	NextFunction
-} from 'express'
+	NextFunction,
+} from 'express';
+
+import { Op } from 'sequelize';
 import { models } from '../db';
 
 const router: Router = Router();
@@ -15,8 +17,66 @@ const {
 export default () => {
 	// List all products
 	router.get('/', async (req: Request, res: Response, _next: NextFunction) => {
-		let products = await Product.findAll()
-			.catch((err: any) => console.error(err));
+		const {
+			limit,
+			page,
+			categoryID,
+			search,
+		} = req.query;
+
+		// Check if categoryID is valid number
+		if (categoryID && Number.isNaN(Number(categoryID))) {
+			return res.status(400).json({
+				data: {},
+				message: req.isSk ? 'programID musí byť platné číslo' : 'programID must be a valid number',
+			});
+		}
+
+		// Check if limit & page are valid numbers
+		if (typeof limit === 'string' && typeof page === 'string' && (Number.isNaN(Number(limit)) || Number.isNaN(Number(page)))) {
+			return res.status(400).json({
+				data: {},
+				message: req.isSk ? 'limit & page musí byť platné číslo' : 'limit & page must be a valid number',
+			});
+		}
+
+		// Check if page is 0
+		if (typeof page === 'string' && !Number.isNaN(Number(page)) && Number(page) === 0) {
+			return res.status(400).json({
+				data: {},
+				message: req.isSk ? 'Neplatná hodnota page' : 'Invalid page value',
+			});
+		}
+
+		// Search Validation
+		if (typeof search === 'string' && search.length <= 0) {
+			return res.status(400).json({
+				data: {},
+				message: req.isSk ? 'Search je prázdy!' : 'Search is empty!',
+			});
+		}
+
+		// Search is string
+		if (typeof search !== 'undefined' && !Number.isNaN(Number(search))) {
+			return res.status(400).json({
+				data: {},
+				message: req.isSk ? 'Search musí byť platný text!' : 'Search must be type string!',
+			});
+		}
+
+		const filter: any = {};
+		if (categoryID) filter.programID = categoryID;
+		if (search) {
+			filter.name = {
+				[Op.iLike]: `%${search}%`,
+			};
+		}
+
+		const products = await Product.findAll({
+			limit: limit ? Number(limit) : 10, // Default limit 10
+			offset: page ? Number(page) - 1 : 0, // Default page 1
+			where: filter,
+		}).catch((err: any) => console.error(err));
 
 		return res.status(200).json({
 			data: products,
@@ -26,9 +86,9 @@ export default () => {
 
 	// List one product
 	router.get('/:productId', async (req: Request, res: Response, _next: NextFunction) => {
-		let { productId } = req.params;
+		const { productId } = req.params;
 
-		let product = await Product.findByPk(productId)
+		const product = await Product.findByPk(productId)
 			.catch((err: any) => console.error(err));
 
 		return res.status(200).json({
@@ -39,7 +99,7 @@ export default () => {
 
 	// Add product
 	router.post('/', async (req: Request, res: Response, _next: NextFunction) => {
-		let { name, price, categoryID } = req.body;
+		const { name, price, categoryID } = req.body;
 
 		// Validation
 		if (!(name && price && categoryID)) {
@@ -58,7 +118,7 @@ export default () => {
 		}
 
 		// Check if is unique
-		let products = Product.findOne({ where: { name }})
+		const products = Product.findOne({ where: { name } })
 			.catch((err: any) => console.error(err));
 
 		if (products.length > 0) {
@@ -66,9 +126,9 @@ export default () => {
 				data: {},
 				message: req.isSk ? 'Produkt už existuje!' : 'Product already exists!',
 			});
-		} 
+		}
 
-		let affected = await Product.build({ name, price, categoryID });
+		const affected = await Product.build({ name, price, categoryID });
 		await affected.save();
 
 		return res.status(201).json({
@@ -97,8 +157,8 @@ export default () => {
 			});
 		}
 
-		let affected = await Product.update(req.body, {
-			where: { id }
+		const affected = await Product.update(req.body, {
+			where: { id },
 		}).catch((error: any) => console.error(error));
 
 		// I ended here
@@ -109,7 +169,7 @@ export default () => {
 			});
 		}
 
-		res.status(200).json({
+		return res.status(200).json({
 			data: {},
 			message: req.isSk ? 'Produkt bol upravený!' : 'Product was updated!',
 		});
@@ -127,7 +187,7 @@ export default () => {
 			});
 		}
 
-		let affected = Product.destroy({ where: { id }})
+		const affected = Product.destroy({ where: { id } })
 			.catch((err: any) => console.error(err));
 
 		// Check if row was deleted
@@ -138,11 +198,11 @@ export default () => {
 			});
 		}
 
-		res.status(200).json({
+		return res.status(200).json({
 			data: {},
 			message: req.isSk ? 'Produkt bol vymazaný!' : 'Product was deleted!',
 		});
 	});
 
 	return router;
-}
+};

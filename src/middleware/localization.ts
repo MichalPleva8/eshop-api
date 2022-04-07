@@ -4,6 +4,7 @@ import {
 	NextFunction,
 } from 'express';
 
+/* eslint no-shadow: "off" */
 declare module 'express' {
 	export interface Request {
 		lang?: string;
@@ -15,8 +16,8 @@ declare module 'express' {
 	}
 }
 
-export default function localization (req: Request, res: Response, next: NextFunction) {
-	const lang = req.headers['language'];
+export default function localization(req: Request, res: Response, next: NextFunction) {
+	const lang = req.headers.language;
 
 	if (lang === 'sk') {
 		req.lang = 'sk';

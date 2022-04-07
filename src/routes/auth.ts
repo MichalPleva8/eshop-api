@@ -2,7 +2,7 @@ import {
 	Router,
 	Request,
 	Response,
-	NextFunction
+	NextFunction,
 } from 'express';
 import * as bcrypt from 'bcrypt';
 import { sign } from 'jsonwebtoken';
@@ -10,6 +10,7 @@ import validator from 'validator';
 
 import { models } from '../db';
 import { USER_ROLES } from '../utils/enums';
+
 const { isEmail } = validator;
 
 const router: Router = Router();
@@ -21,7 +22,7 @@ const {
 export default () => {
 	router.post('/register', async (req: Request, res: Response, _next: NextFunction) => {
 		const { email, password } = req.body;
-		let role = req.body.role || 'USER';
+		const role = req.body.role || 'USER';
 
 		// Check if is not empty
 		if (!(email && password)) {
@@ -41,7 +42,7 @@ export default () => {
 
 		const users = User.findAll({
 			where: { email },
-		})
+		});
 
 		// Check if is unique
 		if (users.length > 0) {
@@ -59,13 +60,13 @@ export default () => {
 			});
 		}
 
-		let hashed = await bcrypt.hash(password, 10)
+		const hashed = await bcrypt.hash(password, 10)
 			.then((hash: any) => hash)
 			.catch((error: any) => {
 				throw new Error(error);
 			});
 
-		let newUser = await User.build({ email: email.toLowerCase(), password: hashed, role });
+		const newUser = await User.build({ email: email.toLowerCase(), password: hashed, role });
 		await newUser.save();
 
 		return res.status(201).json({
@@ -74,6 +75,7 @@ export default () => {
 		});
 	});
 
+	/* eslint consistent-return: "off" */
 	router.post('/login', async (req: Request, res: Response, _next: NextFunction) => {
 		const { email, password } = req.body;
 
@@ -87,7 +89,7 @@ export default () => {
 
 		// Check if user exists
 		const users = await User.findOne({
-			where: { email }
+			where: { email },
 		}).catch((error: any) => {
 			throw new Error(error);
 		});
@@ -102,10 +104,10 @@ export default () => {
 		await bcrypt.compare(password, users.password)
 			.then((result: boolean) => {
 				if (result) {
-					let data = {
+					const data = {
 						id: users.dataValues.id,
 						email,
-						role: users.dataValues.role
+						role: users.dataValues.role,
 					};
 
 					const token = sign(
@@ -113,7 +115,7 @@ export default () => {
 						process.env.TOKEN_SECRET as string,
 						{
 							expiresIn: '30m',
-						}
+						},
 					);
 
 					const refresh = sign(
@@ -121,7 +123,7 @@ export default () => {
 						process.env.REFRESH_SECRET as string,
 						{
 							expiresIn: '7d',
-						}
+						},
 					);
 
 					return res.status(200).json({
@@ -131,16 +133,16 @@ export default () => {
 						},
 						message: req.isSk ? 'Boli ste úspešne prihlasený!' : 'You have been successfuly logged in!',
 					});
-				} else {
-					return res.status(400).json({
-						data: {},
-						message: req.isSk ? 'Nesprávne heslo!' : 'Wrong password!',
-					});
 				}
+
+				return res.status(400).json({
+					data: {},
+					message: req.isSk ? 'Nesprávne heslo!' : 'Wrong password!',
+				});
 			}).catch(((error: any) => {
 				throw new Error(error);
 			}));
 	});
 
 	return router;
-}
+};

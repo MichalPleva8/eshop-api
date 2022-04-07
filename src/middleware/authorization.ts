@@ -1,10 +1,11 @@
 import {
 	Request,
 	Response,
-	NextFunction
+	NextFunction,
 } from 'express';
 import { verify } from 'jsonwebtoken';
 
+/* eslint no-shadow: "off" */
 declare module 'express' {
 	export interface Request {
 		user?: any;
@@ -14,6 +15,7 @@ declare module 'express' {
 	}
 }
 
+/* eslint consistent-return: "off" */
 const authorization = (req: Request, res: Response, next: NextFunction) => {
 	const authHeader = req.headers.authorization;
 
@@ -25,7 +27,7 @@ const authorization = (req: Request, res: Response, next: NextFunction) => {
 		});
 	}
 
-	const token = authHeader.split(" ")[1];
+	const token = authHeader.split(' ')[1];
 	verify(token, process.env.TOKEN_SECRET as string, (err: any, user: any) => {
 		if (err) {
 			return res.status(403).json({
@@ -34,9 +36,9 @@ const authorization = (req: Request, res: Response, next: NextFunction) => {
 			});
 		}
 
-		req.user = user
+		req.user = user;
 		next();
 	});
-}
+};
 
 export default authorization;

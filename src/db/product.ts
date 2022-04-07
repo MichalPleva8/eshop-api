@@ -8,11 +8,13 @@ import { DatabaseModel } from '../types/db';
 import { CategoryModel } from './category';
 
 export class ProductModel extends DatabaseModel {
-	id: number
-	name: String
-	price: number	
+	id: number;
 
-	category: CategoryModel
+	name: String;
+
+	price: number;
+
+	category: CategoryModel;
 }
 
 export default (sequelize: Sequelize) => {
@@ -21,19 +23,19 @@ export default (sequelize: Sequelize) => {
 			type: DataTypes.BIGINT,
 			primaryKey: true,
 			allowNull: false,
-			autoIncrement: true
+			autoIncrement: true,
 		},
 		name: {
 			type: DataTypes.STRING(200),
 		},
 		price: {
 			type: DataTypes.FLOAT,
-		}
+		},
 	}, {
 		paranoid: true,
 		timestamps: true,
 		sequelize,
-		modelName: 'product'
+		modelName: 'product',
 	});
 
 	ProductModel.associate = (models) => {
@@ -41,9 +43,9 @@ export default (sequelize: Sequelize) => {
 			foreignKey: {
 				name: 'categoryID',
 				allowNull: false,
-			}
-		})
-	}
+			},
+		});
+	};
 
 	return ProductModel;
-}
+};

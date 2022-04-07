@@ -14,20 +14,23 @@ import { sequelize } from './db';
 import CategoryRouter from './routes/categories';
 import ProductRouter from './routes/products';
 import AuthRouter from './routes/auth';
+import UserRouter from './routes/users';
 import handleError from './middleware/handleError';
 import localization from './middleware/localization';
 import authorization from './middleware/authorization';
 
 dotenv.config();
 const app = express();
+const PORT = process.env.PORT || 8000;
 
-// Middleware 
+// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(helmet());
 app.use(localization as RequestHandler);
 app.use('/api/categories', authorization, CategoryRouter());
 app.use('/api/products', authorization, ProductRouter());
+app.use('/api/users', authorization, UserRouter());
 app.use('/api/auth', AuthRouter());
 
 // Handle 500 (Internal Error)
@@ -46,7 +49,7 @@ const httpServer = http.createServer(app);
 sequelize.sync();
 console.log('Sync database', 'postgresql://postgres:root@localhost:5432/eshop');
 
-httpServer.listen(8000).on('listening', () => {
+httpServer.listen(PORT).on('listening', () => {
 	console.log('Server started at port 8000');
 });
 
