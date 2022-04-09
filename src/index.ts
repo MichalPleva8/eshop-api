@@ -9,6 +9,7 @@ import express, {
 import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
 import helmet from 'helmet';
+import morgan from 'morgan';
 
 import { sequelize } from './db';
 import CategoryRouter from './routes/categories';
@@ -24,9 +25,11 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 // Middleware
+app.use('/uploads', express.static('uploads'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(helmet());
+app.use(morgan('dev'));
 app.use(localization as RequestHandler);
 app.use('/api/categories', authorization, CategoryRouter());
 app.use('/api/products', authorization, ProductRouter());

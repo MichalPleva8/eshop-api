@@ -7,7 +7,7 @@ import {
 import { DatabaseModel } from '../types/db';
 import { USER_ROLES } from '../utils/enums';
 
-/* eslint no-use-before-define: "warn" */
+/* eslint no-use-before-define: "off" */
 export class UserModel extends DatabaseModel {
 	id: number;
 
@@ -22,6 +22,10 @@ export class UserModel extends DatabaseModel {
 	password: String;
 
 	age: number;
+
+	tel: String;
+
+	profile_pic: String;
 
 	role: USER_ROLES;
 
@@ -54,6 +58,12 @@ export default (sequelize: Sequelize) => {
 		},
 		age: {
 			type: DataTypes.INTEGER,
+		},
+		tel: {
+			type: DataTypes.STRING(200),
+		},
+		profile_pic: {
+			type: DataTypes.STRING(200),
 		},
 		role: {
 			type: DataTypes.ENUM(...Object.values(USER_ROLES)),

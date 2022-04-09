@@ -94,7 +94,7 @@ export default () => {
 			throw new Error(error);
 		});
 
-		if (users.length <= 0) {
+		if (!users || users.length <= 0) {
 			return res.status(400).json({
 				data: {},
 				message: req.isSk ? 'Nenašiel sa žiaden používateľ!' : 'No matching user!',
