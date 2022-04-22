@@ -6,3 +6,6 @@ node_modules
 
 # Big files
 uploads
+
+# Debug
+errorlog.txt

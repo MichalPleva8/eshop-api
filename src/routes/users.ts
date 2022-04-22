@@ -26,37 +26,45 @@ const {
 
 export default () => {
 	// Get all users (Admin * & User (id, nickName) )
-	router.get('/', async (req: Request, res: Response, _next: NextFunction) => {
+	router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 		const { role } = req.user;
-
 		let users;
-		if (role === 'ADMIN') {
-			users = await User.findAll();
-		} else {
-			users = await User.findAll({
-				attributes: ['id', 'nickName', 'profile_pic'],
-			});
-		}
 
-		return res.status(200).json({
-			data: users,
-			message: req.isSk ? 'Zoznam všetkých používateľov' : 'List of all users',
-		});
+		try {
+			if (role === 'ADMIN') {
+				users = await User.findAll();
+			} else {
+				users = await User.findAll({
+					attributes: ['id', 'nickName', 'profile_pic'],
+				});
+			}
+
+			return res.status(200).json({
+				data: users,
+				message: req.isSk ? 'Zoznam všetkých používateľov' : 'List of all users',
+			});
+		} catch (error) {
+			return next(error);
+		}
 	});
 
 	// Get my profile
-	router.get('/me', async (req: Request, res: Response, _next: NextFunction) => {
+	router.get('/me', async (req: Request, res: Response, next: NextFunction) => {
 		const { id } = req.user;
 
-		const data = await User.findOne({
-			where: { id },
-			attributes: ['name', 'surname', 'age', 'nickName', 'tel', 'profile_pic'],
-		});
+		try {
+			const data = await User.findOne({
+				where: { id },
+				attributes: ['name', 'surname', 'age', 'nickName', 'tel', 'profile_pic'],
+			});
 
-		return res.status(200).json({
-			data,
-			message: req.isSk ? 'Váš profile' : 'Your profile',
-		});
+			return res.status(200).json({
+				data,
+				message: req.isSk ? 'Váš profile' : 'Your profile',
+			});
+		} catch (error) {
+			return next(error);
+		}
 	});
 
 	// Update my profile
@@ -71,37 +79,35 @@ export default () => {
 			});
 		}
 
-		const affected = await User.update(req.body, {
-			where: { id },
-			returning: true,
-		})
-		.then((result: any) => result[0])
-		.catch((err: any) => {
-			const errorMessage: any = new Error('Failed to update user profile!');
+		try {
+			const affected = await User.update(req.body, {
+				where: { id },
+				returning: true,
+			})[0];
 
-			return next(errorMessage);
-		});
+			// Check if row was updated
+			if (!affected) {
+				return res.status(400).json({
+					data: {},
+					message: req.isSk ? (
+						'Profil nebol upravený!'
+					) : (
+						'Profile was not updated!'
+					),
+				});
+			}
 
-		// Check if row was updated
-		if (!affected) {
-			return res.status(400).json({
+			return res.status(200).json({
 				data: {},
-				message: req.isSk ? (
-					'Profil nebol upravený!'
-				) : (
-					'Profile was not updated!'
-				),
+				message: req.isSk ? 'Váš profile bol upravený!' : 'Your profile was updated!',
 			});
+		} catch (error) {
+			return next(error);
 		}
-
-		return res.status(200).json({
-			data: {},
-			message: req.isSk ? 'Váš profile bol upravený!' : 'Your profile was updated!',
-		});
 	});
 
 	// Update profile picture
-	router.put('/me/picture', upload.single('picture'), async (req: Request, res: Response, _next: NextFunction) => {
+	router.put('/me/picture', upload.single('picture'), async (req: Request, res: Response, next: NextFunction) => {
 		const { id } = req.user;
 
 		// Check if file is image
@@ -112,34 +118,33 @@ export default () => {
 			});
 		}
 
-		const affected = await User.update({
-			profile_pic: `${req.protocol}://${req.hostname}:${process.env.PORT}/uploads/${req.file?.filename}`,
-		}, {
-			where: { id },
-			returning: true,
-		})
-		.then((result: any) => result[0])
-		.catch((err: any) => {
-			console.error(err);
-			res.end();
-		});
+		try {
+			const affected = await User.update({
+				profile_pic: `${req.protocol}://${req.hostname}:${process.env.PORT}/uploads/${req.file?.filename}`,
+			}, {
+				where: { id },
+				returning: true,
+			})[0];
 
-		// Check if row was updated
-		if (!affected) {
-			return res.status(400).json({
+			// Check if row was updated
+			if (!affected) {
+				return res.status(400).json({
+					data: {},
+					message: req.isSk ? (
+						'Profil nebol upravený!'
+					) : (
+						'Profile was not updated!'
+					),
+				});
+			}
+
+			return res.status(200).json({
 				data: {},
-				message: req.isSk ? (
-					'Profil nebol upravený!'
-				) : (
-					'Profile was not updated!'
-				),
+				message: req.isSk ? 'Profilovka bola upravená!' : 'Profile picture was updated!',
 			});
+		} catch (error) {
+			return next(error);
 		}
-
-		return res.status(200).json({
-			data: {},
-			message: req.isSk ? 'Profilovka bola upravená!' : 'Profile picture was updated!',
-		});
 	});
 
 	// Get user detail (Admin)
@@ -160,29 +165,30 @@ export default () => {
 			attributes = ['id', 'nickName'];
 		}
 
-		const users = await User.findOne({
-			where: { id },
-			attributes: attributes.length > 0 ? attributes : undefined,
-		}).catch((err: any) => {
-			const errorMessage = new Error('Failed to query user data!');
-			next(errorMessage);
-		});
-
-		if (typeof users === 'object' && users.length <= 0) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Nenašli sme žiadneho používateľa' : 'No user found!',
+		try {
+			const users = await User.findOne({
+				where: { id },
+				attributes: attributes.length > 0 ? attributes : undefined,
 			});
-		}
 
-		return res.status(200).json({
-			data: users,
-			message: req.isSk ? 'Používateľové dáta' : 'List of user data',
-		});
+			if (typeof users === 'object' && users.length <= 0) {
+				return res.status(400).json({
+					data: {},
+					message: req.isSk ? 'Nenašli sme žiadneho používateľa' : 'No user found!',
+				});
+			}
+
+			return res.status(200).json({
+				data: users,
+				message: req.isSk ? 'Používateľové dáta' : 'List of user data',
+			});
+		} catch (error) {
+			return next(error);
+		}
 	});
 
 	// Update User (Admin)
-	router.patch('/:id', onlyAdmin, async (req: Request, res: Response, _next: NextFunction) => {
+	router.patch('/:id', onlyAdmin, async (req: Request, res: Response, next: NextFunction) => {
 		const { id } = req.params;
 
 		// Check if id is not empty
@@ -209,28 +215,31 @@ export default () => {
 			});
 		}
 
-		// Values that doesn't exist in schema will not update anything so I can pass req.body
-		const affected = await User.update(req.body, {
-			where: { id },
-			returning: true,
-		});
+		try {
+			const affected = await User.update(req.body, {
+				where: { id },
+				returning: true,
+			})[0];
 
-		// Check if row was updated
-		if (affected <= 0) {
-			return res.status(400).json({
+			// Check if row was updated
+			if (affected <= 0) {
+				return res.status(400).json({
+					data: {},
+					message: req.isSk ? (
+						'Žiadny používateľ nebol upravený!'
+					) : (
+						'No user was updated!'
+					),
+				});
+			}
+
+			return res.status(200).json({
 				data: {},
-				message: req.isSk ? (
-					'Žiadny používateľ nebol upravený, prosím zadajte id existujúceho používateľa a platné používateľské dáta ktoré chcete zmeniť'
-				) : (
-					'No user was deleted, please enter id of existing user and valid user detail you want to change'
-				),
+				message: req.isSk ? 'Používateľ bol upravený!' : 'User was updated!',
 			});
+		} catch (error) {
+			return next(error);
 		}
-
-		return res.status(200).json({
-			data: {},
-			message: req.isSk ? 'Používateľ bol upravený!' : 'User was updated!',
-		});
 	});
 
 	return router;

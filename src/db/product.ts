@@ -6,15 +6,20 @@ import {
 } from 'sequelize';
 import { DatabaseModel } from '../types/db';
 import { CategoryModel } from './category';
+import { OrderDetailModel } from './orderdetail';
 
 export class ProductModel extends DatabaseModel {
 	id: number;
 
-	name: String;
+	name: string;
+
+	desc: string;
 
 	price: number;
 
 	category: CategoryModel;
+
+	orderDetail: OrderDetailModel[];
 }
 
 export default (sequelize: Sequelize) => {
@@ -27,6 +32,10 @@ export default (sequelize: Sequelize) => {
 		},
 		name: {
 			type: DataTypes.STRING(200),
+		},
+		desc: {
+			type: DataTypes.STRING(200),
+			allowNull: true,
 		},
 		price: {
 			type: DataTypes.FLOAT,
@@ -43,6 +52,15 @@ export default (sequelize: Sequelize) => {
 			foreignKey: {
 				name: 'categoryID',
 				allowNull: false,
+			},
+		});
+
+		(ProductModel as any).hasMany(models.OrderDetail, {
+			foreignKey: {
+				name: 'DetailProductID',
+				allowNull: false,
+				constraints: false,
+				defaultValue: null,
 			},
 		});
 	};

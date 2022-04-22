@@ -5,6 +5,8 @@ import { Sequelize } from 'sequelize';
 import defineProduct from './product';
 import defineCategory from './category';
 import defineUser from './user';
+import defineOrder from './order';
+import defineOrderDetail from './orderdetail';
 
 const sequelize: Sequelize = new Sequelize('postgresql://postgres:root@localhost:5432/eshop', {
 	logging: false,
@@ -16,6 +18,8 @@ const modelsBuilder = (instance: Sequelize) => ({
 	Product: instance.import(path.join(__dirname, 'product'), defineProduct),
 	Category: instance.import(path.join(__dirname, 'category'), defineCategory),
 	User: instance.import(path.join(__dirname, 'user'), defineUser),
+	Order: instance.import(path.join(__dirname, 'order'), defineOrder),
+	OrderDetail: instance.import(path.join(__dirname, 'orderdetail'), defineOrderDetail),
 });
 
 const models = modelsBuilder(sequelize);

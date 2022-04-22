@@ -10,12 +10,14 @@ import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import cors from 'cors';
 
 import { sequelize } from './db';
 import CategoryRouter from './routes/categories';
 import ProductRouter from './routes/products';
 import AuthRouter from './routes/auth';
 import UserRouter from './routes/users';
+import OrderRouter from './routes/orders';
 import handleError from './middleware/handleError';
 import localization from './middleware/localization';
 import authorization from './middleware/authorization';
@@ -29,11 +31,13 @@ app.use('/uploads', express.static('uploads'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(helmet());
+app.use(cors({ origin: '*' }));
 app.use(morgan('dev'));
 app.use(localization as RequestHandler);
 app.use('/api/categories', authorization, CategoryRouter());
 app.use('/api/products', authorization, ProductRouter());
 app.use('/api/users', authorization, UserRouter());
+app.use('/api/orders', authorization, OrderRouter());
 app.use('/api/auth', AuthRouter());
 
 // Handle 500 (Internal Error)

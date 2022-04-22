@@ -6,6 +6,7 @@ import {
 } from 'sequelize';
 import { DatabaseModel } from '../types/db';
 import { USER_ROLES } from '../utils/enums';
+import { OrderModel } from './order';
 
 /* eslint no-use-before-define: "off" */
 export class UserModel extends DatabaseModel {
@@ -30,6 +31,8 @@ export class UserModel extends DatabaseModel {
 	role: USER_ROLES;
 
 	completed: UserModel;
+
+	orders: OrderModel[];
 }
 
 export default (sequelize: Sequelize) => {
@@ -75,6 +78,15 @@ export default (sequelize: Sequelize) => {
 		sequelize,
 		modelName: 'user',
 	});
+
+	UserModel.associate = (models) => {
+		(UserModel as any).hasMany(models.Order, {
+			foreignKey: {
+				name: 'OrderUserID',
+				allowNull: false,
+			},
+		});
+	};
 
 	return UserModel;
 };
