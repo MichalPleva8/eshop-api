@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';
 
 import defineProduct from './product';
@@ -8,7 +9,9 @@ import defineUser from './user';
 import defineOrder from './order';
 import defineOrderDetail from './orderdetail';
 
-const sequelize: Sequelize = new Sequelize('postgresql://postgres:root@localhost:5432/eshop', {
+dotenv.config();
+
+const sequelize: Sequelize = new Sequelize(process.env.DATABASE_URL!, {
 	logging: false,
 });
 
