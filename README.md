@@ -1,4 +1,6 @@
-# REST Api - Eshop  
+# REST Api - Eshop
+
+- You can try this api on https://typescript-eshop-api.herokuapp.com/
 
 ### Requirements
 
@@ -49,3 +51,20 @@ Users:
 - My profile ``` GET /api/users/me ```
 - Update my profile ``` PATCH /api/users/me { "name": "Super", "surname": "Admin", "age": 35 } ```
 - Update/Upload my profile picture ``` PUT /api/users/me/picture { picture: ... } ``` Content-type: multipart/form-data
+
+Orders:
+- All orders (ADMIN), My orders (USER) ``` GET /api/orders ```
+- One order ``` GET /api/orders/:id ```
+- Add order ``` POST /api/orders { "address": "Košická 10, Žilina 01001",
+    "phone": "0918131925",
+    "products": [
+        {
+            "productId": 2,
+            "quantity": 1
+        },
+        {
+            "productId": 3,
+            "quantity": 1
+        }
+    ] } ```
+- Delete order (only if I created it) ``` DELETE /api/orders/:id ```
