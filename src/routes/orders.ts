@@ -5,6 +5,8 @@ import {
 	NextFunction,
 } from 'express';
 
+import handleValidationError from '../middleware/handleValidationError';
+import { checkCreateOrder, checkOneOrder } from '../validator/orders';
 import { models, sequelize } from '../db';
 import { USER_ROLES } from '../utils/enums';
 
@@ -13,7 +15,6 @@ const router: Router = Router();
 const {
 	Order,
 	OrderDetail,
-	Category,
 	User,
 	Product,
 } = models;
@@ -26,54 +27,9 @@ export default () => {
 	router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 		const { id, role } = req.user;
 
-		const orders = await Order.findAll({
-			where: role === USER_ROLES.ADMIN ? undefined : { OrderUserID: id },
-			include: [
-				{
-					model: OrderDetail,
-					as: 'orderdetails',
-					include: [{ model: Product }],
-				},
-				{
-					model: User,
-					as: 'user',
-				},
-			],
-		})
-		.catch((error: any) => {
-			console.error(error);
-			next(error);
-		});
-
-		return res.status(200).json({
-			data: orders,
-			message: req.isSk ? 'Zoznam všetkých objednávok' : 'List of all orders',
-		});
-	});
-
-	// One order
-	router.get('/:orderId', async (req: Request, res: Response, next: NextFunction) => {
-		const { id } = req.user;
-		const { orderId } = req.params;
-
-		// Check if categoryId is valid number
-		if (Number.isNaN(Number(orderId))) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? (
-					'Parameter orderId musí byť číslo!'
-				) : (
-					'Parameter orderId must be number!'
-				),
-			});
-		}
-
 		try {
-			const orders = await Order.findOne({
-				where: {
-					id,
-					OrderUserID: orderId,
-				},
+			const orders = await Order.findAll({
+				where: role === USER_ROLES.ADMIN ? undefined : { OrderUserID: id },
 				include: [
 					{
 						model: OrderDetail,
@@ -89,7 +45,48 @@ export default () => {
 
 			return res.status(200).json({
 				data: orders,
-				message: req.isSk ? 'Objednávka' : 'Order',
+				message: req.isSk ? 'Zoznam všetkých objednávok' : 'List of all orders',
+			});
+		} catch (error) {
+			return next(error);
+		}
+	});
+
+	// One order
+	router.get('/:orderId', checkOneOrder(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
+		const { id, role } = req.user;
+		const { orderId } = req.params;
+
+		try {
+			const orders = await Order.findOne({
+				where: role === USER_ROLES.ADMIN ? { id: orderId } : {
+					id: orderId,
+					OrderUserID: id,
+				},
+				include: [
+					{
+						model: OrderDetail,
+						as: 'orderdetails',
+						include: [{ model: Product }],
+					},
+					{
+						model: User,
+						as: 'user',
+					},
+				],
+			});
+
+			// Check if order was found
+			if (!orders) {
+				return res.status(400).json({
+					data: {},
+					message: req.isSk ? 'Objednávka s týmto id neexistuje!' : 'Order with this id does not exist!',
+				});
+			}
+
+			return res.status(200).json({
+				data: orders,
+				message: req.isSk ? 'Vaša Objednávka' : 'Your Order',
 			});
 		} catch (error) {
 			return next(error);
@@ -97,25 +94,9 @@ export default () => {
 	});
 
 	// Add items to cart
-	router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+	router.post('/', checkCreateOrder(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { id, email } = req.user;
 		const { address, phone, products } = req.body;
-
-		// Check if address and phone is empty
-		if (!(address || phone)) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prázde pole (address, phone)!' : 'Empty fields (address, phone)!',
-			});
-		}
-
-		// Check if products is empty
-		if (products.length <= 0) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Žiadne hodnoty neboli zadané!' : 'No values were entered!',
-			});
-		}
 
 		const transaction = await sequelize.transaction();
 
@@ -138,7 +119,7 @@ export default () => {
 				};
 			});
 
-			const details = await OrderDetail.bulkCreate(items);
+			await OrderDetail.bulkCreate(items);
 
 			await transaction.commit();
 
@@ -153,19 +134,11 @@ export default () => {
 	});
 
 	// Delete category
-	router.delete('/:orderId', async (req: Request, res: Response, next: NextFunction) => {
-		const { id, email } = req.user;
+	router.delete('/:orderId', checkOneOrder(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
+		const { id } = req.user;
 		const { orderId } = req.params;
 
-		// Check if id is not empty
-		if (!orderId) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím zadajte id!' : 'Please enter id!',
-			});
-		}
-
-		const t = await sequelize.transaction();
+		const transaction = await sequelize.transaction();
 
 		try {
 			const affected = await Order.destroy({ where: { id: orderId, OrderUserID: id } });
@@ -180,14 +153,14 @@ export default () => {
 				});
 			}
 
-			await t.commit();
+			await transaction.commit();
 
 			return res.status(200).json({
 				data: {},
 				message: req.isSk ? 'Objednávka bola vymazaná!' : 'Order was deleted!',
 			});
 		} catch (error) {
-			await t.rollback();
+			await transaction.rollback();
 			return next(error);
 		}
 	});

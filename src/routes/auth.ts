@@ -6,12 +6,11 @@ import {
 } from 'express';
 import * as bcrypt from 'bcrypt';
 import { sign } from 'jsonwebtoken';
-import validator from 'validator';
 
 import { models } from '../db';
 import { USER_ROLES } from '../utils/enums';
-
-const { isEmail } = validator;
+import { checkAuth } from '../validator/auth';
+import handleValidationError from '../middleware/handleValidationError';
 
 const router: Router = Router();
 
@@ -20,33 +19,17 @@ const {
 } = models;
 
 export default () => {
-	router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
+	router.post('/register', checkAuth(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { email, password } = req.body;
 		const role = req.body.role || 'USER';
 
-		// Check if is not empty
-		if (!(email && password)) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím vyplňte všetky polia!' : 'Please fill out all fields!',
-			});
-		}
-
-		// Check if email is valid
-		if (!isEmail(email)) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Neplatná emailová adresa!' : 'Invalid email address!',
-			});
-		}
-
 		try {
-			const users = await User.findAll({
+			const users = await User.findOne({
 				where: { email },
 			});
 
 			// Check if is unique
-			if (users.length > 0) {
+			if (users) {
 				return res.status(400).json({
 					data: {},
 					message: req.isSk ? 'Používateľ už existuje!' : 'User already exists!',
@@ -76,25 +59,17 @@ export default () => {
 	});
 
 	/* eslint consistent-return: "off" */
-	router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
+	router.post('/login', checkAuth(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { email, password } = req.body;
 
-		// Check if all fields are filled
-		if (!(email && password)) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím vyplňte všetky polia!' : 'Please fill out all fields!',
-			});
-		}
-
+		// Check if password was correct
+		// I used 404 to hide any of sensitive data was typed right
 		try {
-			// Check if user exists
-			// I used 404 to hide any of sensitive data was typed right
 			const users = await User.findOne({
 				where: { email },
 			});
 
-			if (!users || users.length <= 0) {
+			if (!users) {
 				return res.status(404).json({
 					data: {},
 					message: req.isSk ? 'Zlé údaje!' : 'Wrong credentails!',
@@ -103,8 +78,6 @@ export default () => {
 
 			const result = await bcrypt.compare(password, users.password);
 
-			// Check if password was correct
-			// I used 404 to hide any of sensitive data was typed right
 			if (!result) {
 				return res.status(404).json({
 					data: {},

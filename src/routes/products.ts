@@ -7,6 +7,8 @@ import {
 
 import { Op } from 'sequelize';
 import { models } from '../db';
+import handleValidationError from '../middleware/handleValidationError';
+import { checkCreateProduct, checkOneProduct, checkUpdateProduct } from '../validator/products';
 
 const router: Router = Router();
 
@@ -89,11 +91,18 @@ export default () => {
 	});
 
 	// List one product
-	router.get('/:productId', async (req: Request, res: Response, next: NextFunction) => {
+	router.get('/:productId', checkOneProduct(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { productId } = req.params;
 
 		try {
 			const product = await Product.findByPk(productId);
+
+			if (!product) {
+				return res.status(400).json({
+					data: {},
+					message: req.isSk ? 'Produkt neexistuje!' : 'Product does not exist!',
+				});
+			}
 
 			return res.status(200).json({
 				data: product,
@@ -105,30 +114,14 @@ export default () => {
 	});
 
 	// Add product
-	router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+	router.post('/', checkCreateProduct(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { name, price, categoryID } = req.body;
-
-		// Validation
-		if (!(name && price && categoryID)) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím vyplňte všetky polia!' : 'Please fill out all fields!',
-			});
-		}
-
-		// Check if price is number
-		if (typeof price !== 'number') {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Price musí byť číslo!' : 'Price must be a number!',
-			});
-		}
 
 		try {
 			// Check if is unique
-			const products = Product.findOne({ where: { name } });
+			const products = await Product.findOne({ where: { name } });
 
-			if (products.length > 0) {
+			if (products) {
 				return res.status(400).json({
 					data: {},
 					message: req.isSk ? 'Produkt už existuje!' : 'Product already exists!',
@@ -148,16 +141,9 @@ export default () => {
 	});
 
 	// Update product
-	router.patch('/:id', async (req: Request, res: Response, next: NextFunction) => {
-		const { id } = req.params;
-
-		// Check if id is not empty
-		if (!id) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím zadajte id' : 'Please enter id!',
-			});
-		}
+	router.patch('/:productId', checkUpdateProduct(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
+		const { productId } = req.params;
+		const { name, price, categoryID } = req.body;
 
 		// Check if body is not empty
 		if (Object.keys(req.body).length <= 0) {
@@ -168,12 +154,13 @@ export default () => {
 		}
 
 		try {
-			const affected = await Product.update(req.body, {
-				where: { id },
-			});
+			const affected = await Product.update({ name, price, categoryID }, {
+				where: { id: productId },
+				returning: true,
+			})[0];
 
 			// I ended here
-			if (affected <= 0) {
+			if (!affected) {
 				return res.status(400).json({
 					data: {},
 					message: req.isSk ? 'Žiadny produkt nebol upravený!' : 'No product was updated!',
@@ -190,22 +177,14 @@ export default () => {
 	});
 
 	// Delete product
-	router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
-		const { id } = req.params;
-
-		// Check if id is not empty
-		if (!id) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím zadajte id!' : 'Please enter id!',
-			});
-		}
+	router.delete('/:productId', checkOneProduct(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
+		const { productId } = req.params;
 
 		try {
-			const affected = Product.destroy({ where: { id } });
+			const affected = await Product.destroy({ where: { id: productId } });
 
 			// Check if row was deleted
-			if (affected <= 0) {
+			if (!affected) {
 				return res.status(400).json({
 					data: {},
 					message: req.isSk ? 'Žiadny produkt nebol vymazaný!' : 'No product was deleted!',

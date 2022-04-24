@@ -2,7 +2,6 @@ import http from 'http';
 import express, {
 	Request,
 	Response,
-	NextFunction,
 	RequestHandler,
 	ErrorRequestHandler,
 } from 'express';
@@ -44,7 +43,7 @@ app.use('/api/auth', AuthRouter());
 app.use(handleError as ErrorRequestHandler);
 
 // Handle 404 (Page not found)
-app.all('/*', (req: Request, res: Response, _next: NextFunction) => {
+app.all('/*', (req: Request, res: Response) => {
 	res.status(404).json({
 		data: {},
 		message: req.isSk ? 'Nanašla sa žiadna odpoveď pre túto url!' : 'There is nothing on this url!',

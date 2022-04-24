@@ -6,6 +6,8 @@ import {
 } from 'express';
 
 import { models } from '../db';
+import handleValidationError from '../middleware/handleValidationError';
+import { checkCreateCategory, checkOneCategory } from '../validator/categories';
 
 const router: Router = Router();
 
@@ -32,20 +34,8 @@ export default () => {
 	});
 
 	// One category
-	router.get('/:categoryId', async (req: Request, res: Response, next: NextFunction) => {
+	router.get('/:categoryId', checkOneCategory(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { categoryId } = req.params;
-
-		// Check if categoryId is valid number
-		if (Number.isNaN(Number(categoryId))) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? (
-					'Parameter categoryId musí byť číslo!'
-				) : (
-					'Parameter categoryId must be number!'
-				),
-			});
-		}
 
 		try {
 			const categories = await Category.findByPk(categoryId, {
@@ -62,30 +52,14 @@ export default () => {
 	});
 
 	// Add category
-	router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+	router.post('/', checkCreateCategory(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { name } = req.body;
-
-		// Validation
-		if (!name) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím vyplňte všetky polia!' : 'Please fill out all fields!',
-			});
-		}
-
-		// Check if name is string
-		if (typeof name !== 'string') {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Price musí byť číslo!' : 'Price must be a number!',
-			});
-		}
 
 		try {
 			// Check if is unique
-			const categories = await Category.findOne({ where: { name } });
+			const category = await Category.findOne({ where: { name } });
 
-			if (categories.length > 0) {
+			if (category) {
 				return res.status(400).json({
 					data: {},
 					message: req.isSk ? 'Categória už existuje!' : 'Category already exists!',
@@ -105,22 +79,14 @@ export default () => {
 	});
 
 	// Delete category
-	router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
-		const { id } = req.params;
-
-		// Check if id is not empty
-		if (!id) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Prosím zadajte id!' : 'Please enter id!',
-			});
-		}
+	router.delete('/:categoryId', checkOneCategory(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
+		const { categoryId } = req.params;
 
 		try {
-			const affected = await Category.destroy({ where: { id } });
+			const affected = await Category.destroy({ where: { id: categoryId } });
 
 			// Check if row was deleted
-			if (affected <= 0) {
+			if (!affected) {
 				return res.status(400).json({
 					data: {},
 					message: req.isSk ? 'Žiadny produkt nebol vymazaný!' : 'No product was deleted!',

@@ -7,9 +7,11 @@ import {
 } from 'express';
 import multer from 'multer';
 
-import onlyAdmin from '../middleware/onlyAdmin';
-import { models } from '../db';
 import imageFilter from '../middleware/imageFilter';
+import handleValidationError from '../middleware/handleValidationError';
+import { checkOneUser, checkUserUpdate } from '../validator/users';
+import { USER_ROLES } from '../utils/enums';
+import { models } from '../db';
 
 const router: Router = Router();
 const storage = multer.diskStorage({
@@ -28,14 +30,16 @@ export default () => {
 	// Get all users (Admin * & User (id, nickName) )
 	router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 		const { role } = req.user;
-		let users;
 
 		try {
-			if (role === 'ADMIN') {
-				users = await User.findAll();
-			} else {
-				users = await User.findAll({
-					attributes: ['id', 'nickName', 'profile_pic'],
+			const users = await User.findAll({
+				attributes: role === USER_ROLES.ADMIN ? undefined : ['id', 'nickName', 'profile_pic'],
+			});
+
+			if (!users) {
+				res.status(400).json({
+					data: {},
+					message: req.isSk ? 'Žiadny používatelia sa nenašli!' : 'No users found!',
 				});
 			}
 
@@ -67,8 +71,8 @@ export default () => {
 		}
 	});
 
-	// Update my profile
-	router.patch('/me', async (req: Request, res: Response, next: NextFunction) => {
+	// Update my profile (name, surname, nickName, age, tel)
+	router.patch('/me', checkUserUpdate(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
 		const { id } = req.user;
 
 		// Check if body is not empty
@@ -147,31 +151,18 @@ export default () => {
 		}
 	});
 
-	// Get user detail (Admin)
-	router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
-		const { id } = req.params;
+	// Get user detail (ADMIN: *, USER: id, nickName)
+	router.get('/:userId', checkOneUser(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
+		const { userId } = req.params;
 		const { role } = req.user;
 
-		// Check if id param is number
-		if (Number.isNaN(Number(id))) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Id musí byť číslo!' : 'Id must be number!',
-			});
-		}
-
-		let attributes: string[] = [];
-		if (role === 'USER') {
-			attributes = ['id', 'nickName'];
-		}
-
 		try {
-			const users = await User.findOne({
-				where: { id },
-				attributes: attributes.length > 0 ? attributes : undefined,
+			const user = await User.findOne({
+				where: { id: userId },
+				attributes: role === USER_ROLES.ADMIN ? undefined : ['id', 'nickName'],
 			});
 
-			if (typeof users === 'object' && users.length <= 0) {
+			if (!user) {
 				return res.status(400).json({
 					data: {},
 					message: req.isSk ? 'Nenašli sme žiadneho používateľa' : 'No user found!',
@@ -179,63 +170,8 @@ export default () => {
 			}
 
 			return res.status(200).json({
-				data: users,
+				data: user,
 				message: req.isSk ? 'Používateľové dáta' : 'List of user data',
-			});
-		} catch (error) {
-			return next(error);
-		}
-	});
-
-	// Update User (Admin)
-	router.patch('/:id', onlyAdmin, async (req: Request, res: Response, next: NextFunction) => {
-		const { id } = req.params;
-
-		// Check if id is not empty
-		if (!id) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'id parameter nebol nájdení!' : 'id parameter was not found!',
-			});
-		}
-
-		// Check if body is not empty
-		if (Object.keys(req.body).length <= 0) {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Žiadne hodnoty neboli zadané!' : 'No values were entered!',
-			});
-		}
-
-		// Check if email is valid
-		if (typeof req.body.email === 'string') {
-			return res.status(400).json({
-				data: {},
-				message: req.isSk ? 'Nemôžeťe upraviť emailovú adresu!' : 'You can\'t update email!',
-			});
-		}
-
-		try {
-			const affected = await User.update(req.body, {
-				where: { id },
-				returning: true,
-			})[0];
-
-			// Check if row was updated
-			if (affected <= 0) {
-				return res.status(400).json({
-					data: {},
-					message: req.isSk ? (
-						'Žiadny používateľ nebol upravený!'
-					) : (
-						'No user was updated!'
-					),
-				});
-			}
-
-			return res.status(200).json({
-				data: {},
-				message: req.isSk ? 'Používateľ bol upravený!' : 'User was updated!',
 			});
 		} catch (error) {
 			return next(error);
