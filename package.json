@@ -12,7 +12,7 @@
     "seed": "cross-env TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true node -r ts-node/register src/seed.ts",
     "lint": "eslint src/**/*.ts --ignore-pattern node_modules/",
     "deploy": "git add . && git commit -m Heroku && git push heroku main",
-    "build": "npx typescript"
+    "build": "npx typescript && node ./build/seed.js"
   },
   "keywords": [
     "E-comerence"
