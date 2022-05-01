@@ -1,7 +1,5 @@
 import http from 'http';
 import express, {
-	Request,
-	Response,
 	RequestHandler,
 	ErrorRequestHandler,
 } from 'express';
@@ -18,8 +16,9 @@ import AuthRouter from './routes/auth';
 import UserRouter from './routes/users';
 import OrderRouter from './routes/orders';
 import handleError from './middleware/handleError';
-import localization from './middleware/localization';
-import authorization from './middleware/authorization';
+import handleLocalization from './middleware/handleLocalization';
+import authProtect from './middleware/authMiddleware';
+import handleNotFound from './middleware/handleNotFound';
 
 dotenv.config();
 const app = express();
@@ -32,28 +31,23 @@ app.use(bodyParser.json());
 app.use(helmet());
 app.use(cors({ origin: '*' }));
 app.use(morgan('dev'));
-app.use(localization as RequestHandler);
-app.use('/api/categories', authorization, CategoryRouter());
-app.use('/api/products', authorization, ProductRouter());
-app.use('/api/users', authorization, UserRouter());
-app.use('/api/orders', authorization, OrderRouter());
+app.use(handleLocalization as RequestHandler);
+app.use('/api/categories', authProtect, CategoryRouter());
+app.use('/api/products', authProtect, ProductRouter());
+app.use('/api/users', authProtect, UserRouter());
+app.use('/api/orders', authProtect, OrderRouter());
 app.use('/api/auth', AuthRouter());
 
 // Handle 500 (Internal Error)
 app.use(handleError as ErrorRequestHandler);
 
 // Handle 404 (Page not found)
-app.all('/*', (req: Request, res: Response) => {
-	res.status(404).json({
-		data: {},
-		message: req.isSk ? 'Nanašla sa žiadna odpoveď pre túto url!' : 'There is nothing on this url!',
-	});
-});
+app.all('/*', handleNotFound);
 
 const httpServer = http.createServer(app);
 
 sequelize.sync();
-console.log('Sync database', 'postgresql://postgres:root@localhost:5432/eshop');
+console.log('Sync database', process.env.DATABASE_URL);
 
 httpServer.listen(PORT).on('listening', () => {
 	console.log('Server started at port 8000');

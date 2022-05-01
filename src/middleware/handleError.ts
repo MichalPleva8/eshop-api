@@ -10,12 +10,13 @@ export default function handleError(error: any, req: Request, res: Response, nex
 	console.error(error.stack);
 
 	const now = new Date().toLocaleString();
-	appendFileSync('errorlog.txt', `[${now}] - Server has crashed because: ${error.stack}\n`);
+	appendFileSync('errorlog.txt', `[${now}] - ${error.message}\n`);
 
-	res.status(500).json({
+	const statusCode = error.status || 500;
+	res.status(statusCode).json({
 		data: {},
 		message: 'Something went wrong with the server!',
 	});
 
-	next();
+	return next();
 }

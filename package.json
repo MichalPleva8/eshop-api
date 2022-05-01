@@ -12,7 +12,7 @@
     "seed": "cross-env TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true node -r ts-node/register src/seed.ts",
     "lint": "eslint src/**/*.ts --ignore-pattern node_modules/",
     "deploy": "git add . && git commit -m Heroku && git push heroku main",
-    "build": "npx typescript && node ./build/seed.js"
+    "build": "npx typescript"
   },
   "keywords": [
     "E-comerence"
@@ -28,6 +28,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "express-async-handler": "^1.2.0",
     "express-validator": "^6.14.0",
     "helmet": "^5.0.2",
     "jsonwebtoken": "^8.5.1",
@@ -52,7 +53,6 @@
     "cross-env": "^7.0.2",
     "eslint": "^8.12.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.25.4",
-    "nodemon": "^2.0.15"
+    "eslint-plugin-import": "^2.25.4"
   }
 }

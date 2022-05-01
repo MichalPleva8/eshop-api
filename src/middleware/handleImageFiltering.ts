@@ -13,7 +13,7 @@ declare module 'express' {
 	}
 }
 
-export default function imageFilter(req: Request, file: any, cb: any) {
+export default function handleImageFiltering(req: Request, file: any, cb: any) {
 	try {
 		// Accept images only
 		if (!file.originalname.match(/\.(jpg|JPG|jpeg|JPEG|png|PNG|gif|GIF)$/)) {

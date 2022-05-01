@@ -1,123 +1,27 @@
-import {
-	Router,
-	Request,
-	Response,
-	NextFunction,
-} from 'express';
-import * as bcrypt from 'bcrypt';
-import { sign } from 'jsonwebtoken';
+import { Router } from 'express';
 
-import { models } from '../db';
-import { USER_ROLES } from '../utils/enums';
 import { checkAuth } from '../validator/auth';
 import handleValidationError from '../middleware/handleValidationError';
+import { register, login } from '../controllers/authController';
 
 const router: Router = Router();
 
-const {
-	User,
-} = models;
-
 export default () => {
-	router.post('/register', checkAuth(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
-		const { email, password } = req.body;
-		const role = req.body.role || 'USER';
+	// Resiters a new user
+	router.post(
+		'/register',
+		checkAuth(),
+		handleValidationError,
+		register,
+	);
 
-		try {
-			const users = await User.findOne({
-				where: { email },
-			});
-
-			// Check if is unique
-			if (users) {
-				return res.status(400).json({
-					data: {},
-					message: req.isSk ? 'Používateľ už existuje!' : 'User already exists!',
-				});
-			}
-
-			// Check if is role valid
-			if (!Object.values(USER_ROLES).includes(role.toUpperCase())) {
-				return res.status(400).json({
-					data: {},
-					message: req.isSk ? 'Neplatná role!' : 'Invalid role!',
-				});
-			}
-
-			const hashed = await bcrypt.hash(password, 10);
-
-			const newUser = await User.build({ email: email.toLowerCase(), password: hashed, role });
-			await newUser.save();
-
-			return res.status(201).json({
-				data: {},
-				message: req.isSk ? 'Boli ste úspešne zaregistrovaný!' : 'You have been successfuly registered!',
-			});
-		} catch (error) {
-			return next(error);
-		}
-	});
-
-	/* eslint consistent-return: "off" */
-	router.post('/login', checkAuth(), handleValidationError, async (req: Request, res: Response, next: NextFunction) => {
-		const { email, password } = req.body;
-
-		// Check if password was correct
-		// I used 404 to hide any of sensitive data was typed right
-		try {
-			const users = await User.findOne({
-				where: { email },
-			});
-
-			if (!users) {
-				return res.status(404).json({
-					data: {},
-					message: req.isSk ? 'Zlé údaje!' : 'Wrong credentails!',
-				});
-			}
-
-			const result = await bcrypt.compare(password, users.password);
-
-			if (!result) {
-				return res.status(404).json({
-					data: {},
-					message: req.isSk ? 'Zlé údaje!' : 'Wrong credentails!',
-				});
-			}
-
-			const data = {
-				id: users.dataValues.id,
-				email,
-				role: users.dataValues.role,
-			};
-
-			const token = sign(
-				data,
-				process.env.TOKEN_SECRET as string,
-				{
-					expiresIn: '30m',
-				},
-			);
-
-			const refresh = sign(
-				data,
-				process.env.REFRESH_SECRET as string,
-				{
-					expiresIn: '7d',
-				},
-			);
-
-			return res.status(200).json({
-				data: {
-					accessToken: token,
-					refreshToken: refresh,
-				},
-				message: req.isSk ? 'Boli ste úspešne prihlasený!' : 'You have been successfuly logged in!',
-			});
-		} catch (error) {
-			return next(error);
-		}
-	});
+	// Log in user
+	router.post(
+		'/login',
+		checkAuth(),
+		handleValidationError,
+		login,
+	);
 
 	return router;
 };

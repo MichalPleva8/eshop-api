@@ -5,7 +5,7 @@ import {
 } from 'express';
 
 /* eslint consistent-return: "off" */
-export default function onlyAdmin(req: Request, res: Response, next: NextFunction) {
+function adminCheck(req: Request, res: Response, next: NextFunction) {
 	if (req.user.role !== 'ADMIN') {
 		return res.status(403).json({
 			data: {},
@@ -15,3 +15,5 @@ export default function onlyAdmin(req: Request, res: Response, next: NextFunctio
 
 	next();
 }
+
+export default adminCheck;

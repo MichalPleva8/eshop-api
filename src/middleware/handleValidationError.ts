@@ -1,4 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import {
+	Request,
+	Response,
+	NextFunction,
+} from 'express';
 import { validationResult } from 'express-validator';
 
 function handleValidationError(req: Request, res: Response, next: NextFunction) {
@@ -6,7 +10,7 @@ function handleValidationError(req: Request, res: Response, next: NextFunction) 
 	if (!error.isEmpty()) {
 		return res.status(400).json({
 			data: {},
-			message: req.isSk ? 'Zadali ste nesprávne údaje!' : error.array()[0].msg,
+			message: error.array()[0].msg,
 		});
 	}
 

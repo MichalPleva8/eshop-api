@@ -16,7 +16,7 @@ declare module 'express' {
 	}
 }
 
-export default function localization(req: Request, res: Response, next: NextFunction) {
+export default function handleLocalization(req: Request, res: Response, next: NextFunction) {
 	const lang = req.headers.language;
 
 	if (lang === 'sk') {

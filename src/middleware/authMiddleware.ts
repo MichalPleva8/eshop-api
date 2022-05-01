@@ -16,7 +16,7 @@ declare module 'express' {
 }
 
 /* eslint consistent-return: "off" */
-const authorization = (req: Request, res: Response, next: NextFunction) => {
+const authProtect = (req: Request, res: Response, next: NextFunction) => {
 	const authHeader = req.headers.authorization;
 
 	// Check if user has authorized
@@ -41,4 +41,4 @@ const authorization = (req: Request, res: Response, next: NextFunction) => {
 	});
 };
 
-export default authorization;
+export default authProtect;
