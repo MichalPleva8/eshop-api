@@ -15,7 +15,8 @@ const sequelize: Sequelize = new Sequelize(process.env.DATABASE_URL!, {
 	logging: false,
 });
 
-sequelize.authenticate().catch((e: any) => console.error(`Unable to connect to the database ${e}`));
+sequelize.authenticate()
+	.catch((e: any) => console.error(`Unable to connect to the database ${e}`));
 
 const modelsBuilder = (instance: Sequelize) => ({
 	Product: instance.import(path.join(__dirname, 'product'), defineProduct),

@@ -10,7 +10,7 @@ import {
 	deleteCategory,
 	getCategories,
 	getOneCategory,
-} from '../controllers/categoriesControler';
+} from '../controllers/categories.controller';
 
 const router: Router = Router();
 

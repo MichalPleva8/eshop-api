@@ -7,7 +7,7 @@ import {
 	deleteOrder,
 	getOneOrder,
 	getOrders,
-} from '../controllers/ordersControler';
+} from '../controllers/orders.controller';
 
 const router: Router = Router();
 

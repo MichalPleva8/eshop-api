@@ -1,8 +1,8 @@
 {
-  "name": "ecomerence",
+  "name": "eshop",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/index.ts",
+  "main": "./build/index.ts",
   "engines": {
     "node": "14.17.0"
   },
@@ -12,7 +12,8 @@
     "seed": "cross-env TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true node -r ts-node/register src/seed.ts",
     "lint": "eslint src/**/*.ts --ignore-pattern node_modules/",
     "deploy": "git add . && git commit -m Heroku && git push heroku main",
-    "build": "npx typescript"
+    "build": "npx typescript",
+    "test": "jest"
   },
   "keywords": [
     "E-comerence"
@@ -39,20 +40,25 @@
     "ts-node": "^10.7.0",
     "tsc": "^2.0.4",
     "typescript": "^4.6.3",
-    "validator": "^13.7.0"
+    "validator": "^13.7.0",
+    "supertest": "^6.2.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
     "@types/cors": "^2.8.12",
+    "@types/jest": "^27.5.1",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/morgan": "^1.9.3",
     "@types/multer": "^1.4.7",
+    "@types/supertest": "^2.0.12",
     "@types/validator": "^13.7.2",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
     "@typescript-eslint/parser": "^5.17.0",
     "cross-env": "^7.0.2",
     "eslint": "^8.12.0",
     "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.25.4"
+    "eslint-plugin-import": "^2.25.4",
+    "jest": "^28.1.0",
+    "ts-jest": "^28.0.2"
   }
 }

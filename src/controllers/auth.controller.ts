@@ -19,7 +19,7 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 
 	try {
 		const users = await User.findOne({
-			where: { email },
+			where: { email: email.toLowerCase() },
 		});
 
 		// Check if is unique
@@ -39,7 +39,6 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 		}
 
 		const hashed = await bcrypt.hash(password, 10);
-
 		const newUser = await User.build({ email: email.toLowerCase(), password: hashed, role });
 		await newUser.save();
 
@@ -57,7 +56,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
 	try {
 		const users = await User.findOne({
-			where: { email },
+			where: { email: email.toLowerCase() },
 		});
 
 		if (!users) {
@@ -85,17 +84,13 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 		const token = sign(
 			data,
 			process.env.TOKEN_SECRET as string,
-			{
-				expiresIn: '30m',
-			},
+			{ expiresIn: '30m' },
 		);
 
 		const refresh = sign(
 			data,
 			process.env.REFRESH_SECRET as string,
-			{
-				expiresIn: '7d',
-			},
+			{ expiresIn: '7d' },
 		);
 
 		return res.status(200).json({

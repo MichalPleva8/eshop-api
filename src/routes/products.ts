@@ -1,6 +1,5 @@
 import { Router } from 'express';
 
-import { models } from '../db';
 import handleValidationError from '../middleware/handleValidationError';
 import {
 	checkCreateProduct,
@@ -13,7 +12,7 @@ import {
 	addProduct,
 	updateProduct,
 	deleteProduct,
-} from '../controllers/productsControler';
+} from '../controllers/products.controller';
 
 const router: Router = Router();
 

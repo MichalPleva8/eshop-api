@@ -12,7 +12,7 @@ import {
 	getUsers,
 	updateMyProfile,
 	updateMyProfilePicture,
-} from '../controllers/usersControler';
+} from '../controllers/users.controller';
 
 const router: Router = Router();
 
